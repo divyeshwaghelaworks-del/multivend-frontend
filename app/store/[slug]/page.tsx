@@ -52,6 +52,8 @@ export default function PublicStorePage() {
   const [checkoutSubmitting, setCheckoutSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState<{ id: string; total: number } | null>(null);
 
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
@@ -159,7 +161,6 @@ export default function PublicStorePage() {
       setShowCheckoutForm(false);
       setShowCart(false);
 
-      // Refresh products so stock counts reflect the purchase
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (category) params.set('category', category);
@@ -216,7 +217,6 @@ export default function PublicStorePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Store header / branding */}
       <div
         className="px-4 py-12 text-white relative"
         style={{ backgroundColor: store.primaryColor }}
@@ -246,7 +246,6 @@ export default function PublicStorePage() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
@@ -271,7 +270,6 @@ export default function PublicStorePage() {
         )}
       </div>
 
-      {/* Product grid */}
       <div className="max-w-5xl mx-auto px-4 pb-12">
         {products.length === 0 ? (
           <p className="text-gray-500 text-center py-12">No products found.</p>
@@ -284,7 +282,10 @@ export default function PublicStorePage() {
                   key={product.id}
                   className="bg-white rounded-lg shadow overflow-hidden flex flex-col"
                 >
-                  <div className="w-full h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <button
+                    onClick={() => setDetailProduct(product)}
+                    className="w-full h-40 bg-gray-100 flex items-center justify-center overflow-hidden"
+                  >
                     {product.image ? (
                       <img
                         src={product.image}
@@ -294,9 +295,16 @@ export default function PublicStorePage() {
                     ) : (
                       <span className="text-gray-400 text-sm">No image</span>
                     )}
-                  </div>
+                  </button>
                   <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-semibold text-gray-900">{product.name}</h3>
+                    <button
+                      onClick={() => setDetailProduct(product)}
+                      className="text-left"
+                    >
+                      <h3 className="font-semibold text-gray-900 hover:underline">
+                        {product.name}
+                      </h3>
+                    </button>
                     {product.category && (
                       <span className="text-xs text-gray-500 mb-1">{product.category}</span>
                     )}
@@ -326,6 +334,72 @@ export default function PublicStorePage() {
           </div>
         )}
       </div>
+
+      {/* Product detail modal */}
+      {detailProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setDetailProduct(null)}
+          />
+          <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full overflow-hidden">
+            <button
+              onClick={() => setDetailProduct(null)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl leading-none z-10"
+            >
+              ×
+            </button>
+            <div className="w-full h-64 bg-gray-100 flex items-center justify-center overflow-hidden">
+              {detailProduct.image ? (
+                <img
+                  src={detailProduct.image}
+                  alt={detailProduct.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-gray-400">No image</span>
+              )}
+            </div>
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                {detailProduct.name}
+              </h2>
+              {detailProduct.category && (
+                <span className="inline-block text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded mb-3">
+                  {detailProduct.category}
+                </span>
+              )}
+              {detailProduct.description && (
+                <p className="text-gray-600 mb-4">{detailProduct.description}</p>
+              )}
+              <div className="flex items-center justify-between mb-4">
+                <span
+                  className="text-2xl font-bold"
+                  style={{ color: store.primaryColor }}
+                >
+                  ${detailProduct.price.toFixed(2)}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {detailProduct.stock > 0
+                    ? `${detailProduct.stock} in stock`
+                    : 'Out of stock'}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  addToCart(detailProduct);
+                  setDetailProduct(null);
+                }}
+                disabled={detailProduct.stock === 0}
+                className="w-full text-white rounded py-3 font-medium disabled:opacity-40"
+                style={{ backgroundColor: store.primaryColor }}
+              >
+                Add to cart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cart drawer */}
       {showCart && (

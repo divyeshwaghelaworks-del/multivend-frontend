@@ -31,6 +31,23 @@ interface Product {
   storeId: string;
 }
 
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  shopperName: string;
+  shopperEmail: string;
+  total: number;
+  status: string;
+  createdAt: string;
+  items: OrderItem[];
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -58,6 +75,9 @@ export default function DashboardPage() {
   const [productError, setProductError] = useState('');
   const [productSubmitting, setProductSubmitting] = useState(false);
 
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -83,6 +103,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (store) {
       loadProducts(store.id);
+      loadOrders(store.id);
     }
   }, [store]);
 
@@ -93,6 +114,15 @@ export default function DashboardPage() {
       .then((res) => setProducts(res.data.products))
       .catch((err) => console.error('Failed to load products', err))
       .finally(() => setLoadingProducts(false));
+  }
+
+  function loadOrders(storeId: string) {
+    setLoadingOrders(true);
+    api
+      .get(`/orders/store/${storeId}`)
+      .then((res) => setOrders(res.data.orders))
+      .catch((err) => console.error('Failed to load orders', err))
+      .finally(() => setLoadingOrders(false));
   }
 
   async function handleCreateStore(e: React.FormEvent) {
@@ -288,7 +318,7 @@ export default function DashboardPage() {
       </div>
 
       {store && (
-        <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow">
+        <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow mb-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Products</h2>
             <button
@@ -435,6 +465,52 @@ export default function DashboardPage() {
                       Delete
                     </button>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {store && (
+        <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Your orders</h2>
+
+          {loadingOrders ? (
+            <p className="text-gray-500">Loading orders...</p>
+          ) : orders.length === 0 ? (
+            <p className="text-gray-500">No orders yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="border border-gray-200 rounded-lg p-4"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="font-medium text-gray-900">{order.shopperName}</p>
+                      <p className="text-xs text-gray-500">{order.shopperEmail}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900">
+                        ${order.total.toFixed(2)}
+                      </p>
+                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                        {order.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {order.items.map((item) => (
+                      <div key={item.id}>
+                        {item.quantity}× {item.name} — ${item.price.toFixed(2)} each
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {new Date(order.createdAt).toLocaleString()}
+                  </p>
                 </div>
               ))}
             </div>
