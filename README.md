@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MultiVend — Frontend
 
-## Getting Started
+Multi-tenant store management SaaS frontend. Store owners sign up, create a branded storefront, and manage products; shoppers browse, add to cart, and check out; a platform admin views orders and revenue across every store.
 
-First, run the development server:
+**Live app:** https://multivend-frontend.vercel.app
+**Backend API:** https://multivend-backend-zjf3.onrender.com
+**Backend repo:** https://github.com/divyeshwaghelaworks-del/multivend-backend
 
+> Note: the backend is hosted on Render's free tier, which spins down after ~15 minutes of inactivity. The first request after idle can take 30–50 seconds while the server wakes up — this is expected, not a bug. If a page looks stuck loading right after opening the live app, that's why.
+
+## Tech stack
+
+- Next.js (App Router)
+- Tailwind CSS
+- Axios (with a request interceptor that auto-attaches the JWT from `localStorage`)
+
+## Setup
+
+1. Clone the repo and install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+   git clone https://github.com/divyeshwaghelaworks-del/multivend-frontend.git
+   cd multivend-frontend
+   npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Create a `.env.local` file in the root with:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+(Use the live backend URL instead if you don't want to run the backend locally: `https://multivend-backend-zjf3.onrender.com/api`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Start the dev server:
+```bash
+   npm run dev
+```
 
-## Learn More
+The app will be running at `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+## Demo credentials
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Role | Email | Password | Store |
+|------|-------|----------|-------|
+| Admin | test@example.com | password123 | Acme Corp (`/store/acme-corp`) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Log in with this account at `/login` to see the CRM dashboard, or visit any `/store/[slug]` page directly without logging in.
 
-## Deploy on Vercel
+## Pages
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Route | Purpose | Access |
+|-------|---------|--------|
+| `/` | Landing page | Public |
+| `/signup` | Store owner signup | Public |
+| `/login` | Login (redirects to `/crm` for admins, `/dashboard` for owners) | Public |
+| `/dashboard` | Owner dashboard — create/view store, manage products, view own orders | Owner (protected) |
+| `/store/[slug]` | Public storefront — branding, product grid, search/filter, product detail, cart, checkout | Public |
+| `/crm` | Platform admin dashboard — all orders, revenue by store, filter by store | Admin only (protected) |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Multi-tenancy on the frontend
+
+The same `/store/[slug]` page template is reused for every store — the slug in the URL determines which store's branding and products get fetched and rendered. No two stores share data on this page since every API call is scoped by that slug, and the backend independently double-checks tenant ownership server-side.
+
+Route protection (`/dashboard`, `/crm`) is currently done client-side: on mount, each page checks for a valid token and role in `localStorage` and redirects if missing/incorrect. The actual data protection is enforced server-side regardless — every protected API call independently checks the JWT and, for CRM routes, the user's role — so even if someone bypassed the client-side redirect, they couldn't retrieve another tenant's data.
+
+## Trade-offs & what I'd improve with more time
+
+- Client-side auth guards (see above) work but aren't as robust as a proper middleware-based check — would move to Next.js middleware for route protection given more time.
+- No image upload UI — product images are added via a plain URL field rather than a file picker with Cloudinary/S3 upload.
+- No pagination on product grids or order tables yet.
+- No loading skeletons — currently just plain "Loading..." text in a few places.
