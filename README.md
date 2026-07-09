@@ -24,6 +24,9 @@ Multi-tenant store management SaaS frontend. Store owners sign up, create a bran
 ```
 
 2. Create a `.env.local` file in the root with:
+```
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
 
 (Use the live backend URL instead if you don't want to run the backend locally: `https://multivend-backend-zjf3.onrender.com/api`)
 
