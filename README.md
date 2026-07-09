@@ -42,8 +42,9 @@ The app will be running at `http://localhost:3000`.
 | Role | Email | Password | Store |
 |------|-------|----------|-------|
 | Admin | test@example.com | password123 | Acme Corp (`/store/acme-corp`) |
+| Owner | ronaldo@gmail.com | ronaldo777 | Ronaldo's Store (`/store/cr7`) |
 
-Log in with this account at `/login` to see the CRM dashboard, or visit any `/store/[slug]` page directly without logging in.
+Log in with the admin account at `/login` to see the CRM dashboard, or the owner account to see the owner dashboard. Any `/store/[slug]` page can be visited directly without logging in.
 
 ## Pages
 
